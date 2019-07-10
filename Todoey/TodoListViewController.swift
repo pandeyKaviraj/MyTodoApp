@@ -9,12 +9,15 @@
 import UIKit
 
 class TodoListViewController: UITableViewController {
+    let defaults = UserDefaults.standard
     
     var itemArray = ["Mummy", "Papa", "Sister", "Myself"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+            itemArray = items
+        }
     }
     
     //MARK - numberofrowsinsection methods
@@ -59,6 +62,7 @@ class TodoListViewController: UITableViewController {
             //what will happen once the user clicks the Add Items button on uialert
             //Future we can add some validation so we can prevent user to add empty sting
             self.itemArray.append(textField.text!)
+            self.defaults.set(self.itemArray, forKey: "TodoListArray")
             self.tableView.reloadData()
             
         }

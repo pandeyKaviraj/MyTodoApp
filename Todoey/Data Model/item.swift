@@ -8,7 +8,8 @@
 
 import Foundation
 
-class Item {
+//Class must conforms to Encodable protocol it means Item now encode itself into a plist or json and all property must be standard data type
+class Item: Codable {
     var title: String = ""
     var done: Bool = false
 }

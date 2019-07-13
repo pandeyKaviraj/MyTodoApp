@@ -19,9 +19,9 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         //Know you document directory, current app data to see
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist"))
-        
-        //loadItems()
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist") ?? "Unknown path")
+        //Load data from database during viewDidLoad method triggers
+        loadItems()
     }
     
     //MARK - numberofrowsinsection methods
@@ -101,17 +101,19 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-//    func loadItems() {
-//        if let data = try? Data(contentsOf: dataFilePath!) {
-//            let decoder = PropertyListDecoder()
-//            do {
-//                itemArray = try decoder.decode([Item].self, from: data)
-//            }
-//            catch {
-//                print("Error decoding item array, \(error)!")
-//            }
-//        }
-//    }
+    //MARK - Read from core data
+    
+    func loadItems() {
+        //Requesting Item table to retrieve data
+        let request: NSFetchRequest = Item.fetchRequest()
+        do {
+            //Data passed in itemArray to load, during viewDidLoad methods triggers
+            itemArray = try context.fetch(request)
+        }
+        catch {
+            print("Error fetching data from context \(error)")
+        }
+    }
     
 } //End of class
 

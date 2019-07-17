@@ -16,6 +16,7 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
+    //Property observer
     var selectedCategory: Category? {
         didSet {
             loadItems()

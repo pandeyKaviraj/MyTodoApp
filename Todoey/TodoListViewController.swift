@@ -15,13 +15,19 @@ class TodoListViewController: UITableViewController {
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext//view context is temp area, our app takks it to
     
     var itemArray = [Item]()
+    
+    var selectedCategory: Category? {
+        didSet {
+            loadItems()
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         //Know you document directory, current app data to see
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist") ?? "Unknown path")
         //Load data from database during viewDidLoad method triggers
-        loadItems()
+        //loadItems()
     }
     
     //MARK - numberofrowsinsection methods
@@ -47,7 +53,13 @@ class TodoListViewController: UITableViewController {
     //tells the delegate(Current class) specified rows is selected
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        //MARK- Update and delete for core data
+    
+        //itemArray[indexPath.row].setValue("Completed", forKey: "title")
+        //Item delete from database and table view
+       // context.delete(itemArray[indexPath.row])
+       // itemArray.remove(at: indexPath.row)
+        //itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         saveItems()
        //Currently selected cell index path cell to give it a checkmark and selected checkmark remove
 //        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark {
@@ -76,6 +88,7 @@ class TodoListViewController: UITableViewController {
             let newitem = Item(context: self.context)// item is nsmanaged object
             newitem.title = textField.text!
             newitem.done = false
+            newitem.parentCategory = self.selectedCategory
             self.itemArray.append(newitem)
             self.saveItems()
         }
@@ -86,9 +99,11 @@ class TodoListViewController: UITableViewController {
         }
         
         alert.addAction(action)
-        present(alert, animated: true
-            , completion: nil)
+        present(alert, animated: true, completion: nil)
     }
+    
+    
+    //MARK- Model manupulation methods
     
     func saveItems() {
 
@@ -103,9 +118,21 @@ class TodoListViewController: UITableViewController {
     
     //MARK - Read from core data
     
-    func loadItems() {
+    //parameter call with loaditems is for searchbar item and without parameter is for all data fetch from database
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        
+        //query to database for
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        }
+        else {
+            request.predicate = categoryPredicate
+        }
+        
         //Requesting Item table to retrieve data
-        let request: NSFetchRequest = Item.fetchRequest()
+        //let request: NSFetchRequest = Item.fetchRequest()
         do {
             //Data passed in itemArray to load, during viewDidLoad methods triggers
             itemArray = try context.fetch(request)
@@ -113,7 +140,45 @@ class TodoListViewController: UITableViewController {
         catch {
             print("Error fetching data from context \(error)")
         }
+        tableView.reloadData()
+    }
+}
+
+
+
+
+
+
+
+//MARK- Search bar methods
+
+extension TodoListViewController: UISearchBarDelegate {
+    //Methods tells the todolistviewcontroller (delegate) searchbar has clicked
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.predicate = predicate
+        
+        //Item sorting
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        //below modified request to load data on table view
+        loadItems(with: request, predicate: predicate)
     }
     
-} //End of class
+    //MARK - After search and cancel clicked, load all items
+    //This methods trigggered when user somethig type on screen and cancel click
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0
+        {
+            loadItems()
+            //Clear keyboard and search bar cursor in foreground
+            //resignFirstResponder puts object to first responder in its widows
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+    }
+}
+
+
 

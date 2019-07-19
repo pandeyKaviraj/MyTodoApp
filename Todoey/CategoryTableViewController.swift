@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class CategoryTableViewController: UITableViewController {
+class CategoryTableViewController: SwipeTableViewController{
     //Instance of realm
     let realm = try! Realm()
     //categoryArray is a type of results and return results object
@@ -17,7 +17,6 @@ class CategoryTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         loadCategories()
     }
     
@@ -27,12 +26,12 @@ class CategoryTableViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No categories added yet"
         return cell
     }
     
-
+    
     //MARK- Add New Categories
     
     
@@ -46,8 +45,8 @@ class CategoryTableViewController: UITableViewController {
             //Future we can add some validation so we can prevent user to add empty sting
             let newCategory = Category()
             newCategory.name = textField.text!
-           // newitem.done = false
-           // self.categoryArray.append(newCategory)
+            // newitem.done = false
+            // self.categoryArray.append(newCategory)
             //Save it on persistent container
             self.save(category: newCategory)
         }
@@ -77,9 +76,6 @@ class CategoryTableViewController: UITableViewController {
     }
     
     
-    
-    
-    
     //MARK- Model manupulation methods
     
     func save(category: Category) {
@@ -87,9 +83,8 @@ class CategoryTableViewController: UITableViewController {
         do {
             //Try to write on database and add category object
             try realm.write {
-                 realm.add(category)
+                realm.add(category)
             }
-           
         }
         catch {
             print("Error saving context \(error)")
@@ -102,14 +97,25 @@ class CategoryTableViewController: UITableViewController {
     func loadCategories() {
         //Result type object passed to category array, it's auto updating
         categoryArray = realm.objects(Category.self)
-        
-        
-        
         tableView.reloadData()
     }
-
-
-}
     
-
-
+    
+    //Swipe delete methods
+    
+    override func updateModel(at indexpath: IndexPath) {
+        // handle action by updating model with deletion, click on delete button while swipeing from right
+        if let categoryForDeletion = categoryArray?[indexpath.row]
+                    {
+                        do {
+                            try self.realm.write {
+                                self.realm.delete(categoryForDeletion)
+                            }
+                        }
+                        catch {
+                            print("Error deleting categories \(error)")
+                        }
+                        //tableView.reloadData()
+                    }
+    }
+}

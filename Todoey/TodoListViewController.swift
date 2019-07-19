@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     //tapping in uiapplication, getting singleton object and tapping uiapplication delegate and casting and now acces to property persistentContainer and grabing view context
     var todoItems: Results<Item>?
@@ -38,7 +38,7 @@ class TodoListViewController: UITableViewController {
     
     //MARK - Table view datasource methods
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let item = todoItems?[indexPath.row] {
             cell.textLabel?.text = item.title
             //Ternary operator ==>
@@ -86,12 +86,12 @@ class TodoListViewController: UITableViewController {
             if let currentCategory = self.selectedCategory {
                 
                 do {
-                try self.realm.write {
-                    let newitem = Item()
-                    newitem.title = textField.text!
-                    newitem.dateCreated = Date()
-                    currentCategory.items.append(newitem)
-                }
+                    try self.realm.write {
+                        let newitem = Item()
+                        newitem.title = textField.text!
+                        newitem.dateCreated = Date()
+                        currentCategory.items.append(newitem)
+                    }
                 }
                 catch {
                     print("Error saving new Items \(error)")
@@ -99,7 +99,7 @@ class TodoListViewController: UITableViewController {
             }
             self.tableView.reloadData()
             
-  
+            
         }
         
         alert.addTextField { (alertTextField) in
@@ -113,12 +113,25 @@ class TodoListViewController: UITableViewController {
     
     
     //MARK- Model manupulation methods
-
+    
     
     //MARK - Read from realm database
     func loadItems() {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         tableView.reloadData()
+    }
+    
+    override func updateModel(at indexpath: IndexPath) {
+        if let TododelteItem = todoItems?[indexpath.row] {
+            do {
+                try realm.write {
+                    realm.delete(TododelteItem)
+                }
+            }
+            catch {
+                print("Error in Todo item deletion \(error)")
+            }
+        }
     }
 }
 
@@ -128,10 +141,10 @@ class TodoListViewController: UITableViewController {
 extension TodoListViewController: UISearchBarDelegate {
     //Methods tells the todolistviewcontroller (delegate) searchbar has clicked
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-       todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
         tableView.reloadData()
     }
-
+    
     
     //MARK - After search and cancel clicked, load all items
     //This methods trigggered when user somethig type on screen and cancel click

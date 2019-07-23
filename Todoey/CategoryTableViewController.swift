@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class CategoryTableViewController: SwipeTableViewController{
     //Instance of realm
@@ -18,6 +19,7 @@ class CategoryTableViewController: SwipeTableViewController{
     override func viewDidLoad() {
         super.viewDidLoad()
         loadCategories()
+        tableView.separatorStyle = .none
     }
     
     //MARK- TableView Datasource Methods
@@ -27,7 +29,12 @@ class CategoryTableViewController: SwipeTableViewController{
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
-        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No categories added yet"
+        if let category = categoryArray?[indexPath.row]
+        {
+            cell.textLabel?.text = category.name ?? "No categories added yet"
+            cell.backgroundColor = UIColor(hexString: category.colour ?? "1D9BF6")
+        }
+       
         return cell
     }
     
@@ -45,6 +52,7 @@ class CategoryTableViewController: SwipeTableViewController{
             //Future we can add some validation so we can prevent user to add empty sting
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.colour = UIColor.randomFlat.hexValue()
             // newitem.done = false
             // self.categoryArray.append(newCategory)
             //Save it on persistent container
